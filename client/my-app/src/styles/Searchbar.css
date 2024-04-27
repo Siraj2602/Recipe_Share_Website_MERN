@@ -1,0 +1,20 @@
+/* CSS File for Search Bar. */
+
+.search-bar {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50px;
+  margin-top: 2rem;
+}
+
+.search-bar input {
+  width: 50%; /* Adjust based on desired width */
+  padding: 10px;
+  height: 100%;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+}
