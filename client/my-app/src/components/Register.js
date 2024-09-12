@@ -39,8 +39,9 @@ const Register = () => {
           toast.warn("User already exists. Try with different email");
         } else {
           toast.success("Registration successful.");
+          console.log(user);
           localStorage.setItem("token", user.token);
-          localStorage.setItem("user_id", user.user.userId);
+          localStorage.setItem("user_id", user.newUser.userId);
           setTimeout(() => {
             window.location.href = "/";
           }, 4000);
@@ -49,6 +50,7 @@ const Register = () => {
         console.error("Failed to register user:", response.status);
       }
     } catch (error) {
+      console.log(error);
       toast.error("An error occurred while registering user:", error);
     }
   };
@@ -70,7 +72,7 @@ const Register = () => {
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          type="text"
+          type="password"
           placeholder="Enter Your password"
           onChange={(e) => setPassword(e.target.value)}
         />

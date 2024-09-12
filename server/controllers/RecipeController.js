@@ -2,16 +2,22 @@
 
 const Recipe = require("../Schema/RecipeSchema");
 const Liked = require("../Schema/LikedRecipeSchema");
+const User = require("../Schema/UserSchema");
+const mongoose = require("mongoose");
+
+const { v4: uuidv4 } = require("uuid");
 
 /* This is the function which handles the creation of the new recipe*/
 
 const createRecipe = async (req, res) => {
   try {
     const { title, ingredients, instructions, imageUrl, user_id } = req.body;
+    const recipeId = uuidv4();
 
     /* Create a new entry in the Recipe document with all the details of the new recipe. */
 
     const newRecipe = await Recipe.create({
+      recipeId,
       title,
       ingredients,
       instructions,
@@ -30,9 +36,8 @@ const createRecipe = async (req, res) => {
 
 const getRecipe = async (req, res) => {
   const recipeId = req.params.id;
-  console.log("Recipe Id: ", recipeId);
   try {
-    let recipe = await Recipe.findOne({ _id: recipeId });
+    let recipe = await Recipe.findOne({ recipeId: recipeId });
 
     res.status(200).json(recipe);
   } catch (error) {
@@ -58,10 +63,9 @@ const getAllRecipes = async (req, res) => {
 
 const updateRecipe = async (req, res) => {
   const { title, ingredients, instructions, imageUrl, user_id } = req.body;
-  console.log("In here");
 
-  const _id = req.params.id;
-  console.log("Recipe Id: ", _id);
+  const recipeId = req.params.id;
+  console.log("Recipe Id: ", recipeId);
   updated_data = {
     title: title,
     ingredients: ingredients,
@@ -70,7 +74,7 @@ const updateRecipe = async (req, res) => {
   };
 
   try {
-    const result = await Recipe.findByIdAndUpdate(_id, updated_data, {
+    const result = await Recipe.findOneAndUpdate({recipeId : recipeId}, updated_data, {
       new: true,
       runValidators: true,
     });
@@ -78,7 +82,6 @@ const updateRecipe = async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     console.error(error);
-    console.log("Result: ", result);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -89,12 +92,22 @@ const deleteRecipe = async (req, res) => {
   try {
     const recipeId = req.params.id;
 
-    const deletedRecipe = await Recipe.deleteOne({ _id: recipeId });
 
+    // Step 1: Delete the recipe from the Recipe collection
+    const deletedRecipe = await Recipe.deleteOne({ 'recipeId': recipeId });
+
+    // If the recipe is not found, return a 404 error
     if (!deletedRecipe.deletedCount) {
       return res.status(404).json({ error: "Recipe not found" });
     }
 
+    // Step 2: Remove the recipe from all users' favorites
+    await User.updateMany(
+      { favorites: recipeId }, // Find all users who have this recipe in their favorites
+      { $pull: { favorites: recipeId } } // Remove the recipe from their favorites array
+    );
+
+    // Step 3: Return the updated list of recipes after deletion
     const recipes = await Recipe.find();
 
     res.status(200).json({ message: "Recipe deleted successfully", recipes });
@@ -106,50 +119,52 @@ const deleteRecipe = async (req, res) => {
 
 const LikedList = async (req, res) => {
   try {
-    const { user_id, recipeId } = req.body;
-    console.log("Recipe Id :", recipeId);
-    // Find the recipe by ID in the database
-    let recipe = await Recipe.findOne({
-      _id: recipeId,
-    });
+    const { user_id, recipeId } = req.body; // Get user ID and recipe ID from the request body
+    console.log(req.body);
+    console.log("Recipe Id:", recipeId);
 
-    // Check if the recipe exists in the user's favorites
-    const existingFavorite = await Liked.findOne({
-      title: recipe.title,
-      user_id: user_id,
-    });
-
-    if (existingFavorite) {
-      // Recipe already exists in favorites
-      return res
-        .status(400)
-        .json({ error: "Recipe already exists in your favorites" });
-    } else {
-      // Create a new favorite recipe entry
-      const { title, instructions, imageUrl, ingredients } = recipe;
-      const newFavorite = await Liked.create({
-        title,
-        instructions,
-        imageUrl,
-        ingredients,
-        user_id,
-      });
-
-      // Respond with the newly added favorite recipe
-      return res.status(201).json({ favoriteRecipe: newFavorite });
+    // Check if the recipe exists in the database
+    const recipe = await Recipe.findOne({recipeId : recipeId});
+    if (!recipe) {
+      return res.status(404).json({ error: "Recipe not found" });
     }
+
+    // Add the recipeId to the user's favorites list, using $addToSet to prevent duplicates
+    const updatedUser = await User.findOneAndUpdate(
+      { userId : user_id }, // Find user by ID
+      { $addToSet: { favorites: recipeId } }, // Add recipeId to the favorites array
+      { new: true } // Return the updated user document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Return the updated user document with the new favorites list
+    res.status(200).json({ message: "Recipe added to favorites", user: updatedUser });
   } catch (error) {
-    // Handle any errors that occur during the process
-    console.error("Error in Liked:", error);
-    return res.status(500).json({ error: "An internal server error occurred" });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
 const getAllLikedRecipes = async (req, res) => {
-  const user_id = req.params.id;
   try {
-    const allLikedRecipes = await Liked.find({ user_id: user_id });
-    res.status(200).json(allLikedRecipes);
+    const user_id = req.params.id; // Get the user ID from the request parameters
+
+    // Step 1: Find the user by their ID and retrieve the `favorites` array
+    const user = await User.findOne({userId : user_id});
+
+    // If the user is not found, return a 404 error
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Step 2: Use the favorites array to find all recipes from the Recipe schema
+    const likedRecipes = await Recipe.find({ recipeId: { $in: user.favorites } });
+
+    // Step 3: Return the list of liked recipes
+    res.status(200).json({ likedRecipes });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
@@ -158,12 +173,20 @@ const getAllLikedRecipes = async (req, res) => {
 
 const removeFromLikedRecipes = async (req, res) => {
   try {
-    const recipeId = req.params.id;
+    const recipeId = req.body.recipeId;
+    const user_id = req.body.user_id;  
+    
+    console.log("Recipe Id : " , recipeId);
+    console.log("User Id : " , user_id);
 
-    // Find and delete the liked recipe by ID
-    const deletedLikedRecipe = await Liked.deleteOne({ _id: recipeId });
+    const deletedLikedRecipe = await User.updateMany(
+      { userId: user_id }, // Find all users who have this recipe in their favorites
+      { $pull: { favorites: recipeId } } // Remove the recipe from their favorites array
+    );
 
-    if (!deletedLikedRecipe.deletedCount) {
+    console.log(deletedLikedRecipe);
+
+    if (!deletedLikedRecipe) {
       return res.status(404).json({ error: "Liked recipe not found" });
     }
 
@@ -197,6 +220,27 @@ const searchRecipes = async (req, res) => {
   }
 };
 
+const checkFavorite = async (req, res) => {
+  const { user_id, recipeId } = req.body;
+  console.log("Checking Favorite");
+  try{
+  const user = await User.findOne({ userId : user_id, favorites: { $in: [recipeId] } });
+
+  console.log(user)
+    // If user is found and recipeId is in favorites array
+    if (user) {
+      console.log("Returning Favorite as True");
+      return res.status(200).json({ isFavorite: true });
+    } else {
+      return res.status(200).json({ isFavorite: false });
+    }
+  } catch (error) {
+    console.error('Error checking favorite status:', error);
+    return { isFavorite: false, error: 'An error occurred while checking favorite status.' };
+  }
+
+}
+
 module.exports = {
   getAllRecipes,
   getRecipe,
@@ -207,4 +251,5 @@ module.exports = {
   LikedList,
   removeFromLikedRecipes,
   searchRecipes,
+  checkFavorite,
 };

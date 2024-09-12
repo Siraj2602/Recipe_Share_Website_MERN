@@ -15,6 +15,7 @@ const UserSchema = mongoose.Schema({
     required: true,
   },
   email: { type: String, lowercase: true },
+  favorites: [String]
 });
 
 module.exports = mongoose.model("User", UserSchema);

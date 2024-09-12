@@ -14,12 +14,16 @@
 
 /* Style for each individual recipe card */
 .Recipe {
-  background-color: #f8f8f8;
+  width: 250px; /* Fixed width for each card */
+  margin: 20px;
+  padding: 10px;
   border: 1px solid #ddd;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: calc(33.33% - 20px); /* Three columns with 20px gap */
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
 }
 
 /* Style for recipe title */
@@ -29,11 +33,24 @@
   margin-bottom: 10px;
 }
 
+.Recipe .image-container {
+  width: 100%;
+  height: 250px; /* Fixed height for consistency */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0; /* Background color to handle any spaces */
+  overflow: hidden;
+  position: relative;
+}
+
 /* Style for recipe image */
 .Recipe img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 5px;
+  height: 250px;
+  object-fit: contain; /* Ensures the full image is visible without cropping */
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background-color: #f0f0f0; /* Optional: Adds background color for empty spaces */
 }
 
 /* Style for ingredients list */

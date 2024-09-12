@@ -8,14 +8,11 @@ import "react-toastify/dist/ReactToastify.css"; // Import the CSS for styling
 /* This Component is for listing all the recipes interface. */
 
 const Recipes = () => {
-  /* This is used for setting a use state for the recipes. */
   const [recipes, setRecipes] = useState([]);
 
   useEffect(() => {
     getRecipes();
   }, []);
-
-  /* This section is for getting all the avaiable recipes in the database.*/
 
   const getRecipes = () => {
     fetch("https://localhost:2000/auth/recipe", {
@@ -154,58 +151,11 @@ const Recipes = () => {
       <div className="Recipes">
         {recipes.length > 0 ? (
           recipes.map((recipe) => (
-            <div key={recipe._id} className="Recipe">
-              <h2>{recipe.title}</h2>
+            <div key={recipe.recipeId} className="Recipe">
               <img src={recipe.imageUrl} alt={recipe.title} />
-              <h3>Ingredients:</h3>
-              <ul>
-                {recipe.ingredients.length > 0 && (
-                  <ul>
-                    {recipe.ingredients.map((ingredient, index) => (
-                      <li key={index}>{ingredient}</li>
-                    ))}
-                  </ul>
-                )}
-              </ul>
-              <div className="instructions-container">
-                <h3>Instructions:</h3>
-                {recipe.instructions.match(/^\d+\./) ? (
-                  <div className="instructions-text">
-                    {recipe.instructions.split("\n").map((step, index) => (
-                      <p key={index}>{step}</p>
-                    ))}
-                  </div>
-                ) : (
-                  <ol className="instructions-list">
-                    {recipe.instructions.split("\n").map((step, index) => (
-                      <li key={index}>{step}</li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-              {localStorage.getItem("user_id") === recipe.user_id ? (
-                <button
-                  className="delete-button"
-                  onClick={() => handleDeleteRecipe(recipe._id)}
-                >
-                  Delete
-                </button>
-              ) : (
-                console.log("Cannot Delete")
-              )}
-              {localStorage.getItem("user_id") === recipe.user_id ? (
-                <Link to={`/editRecipe/${recipe._id}`} className="edit-button">
-                  <button className="edit-recipe-button">Edit</button>
-                </Link>
-              ) : (
-                console.log("Cannot Edit")
-              )}
-              <button
-                className="add-to-favorites-button"
-                onClick={() => handleAddToFavorites(recipe._id)}
-              >
-                Add to Favorites
-              </button>
+              <Link to={`/recipeDetails/${recipe.recipeId}`}>
+                <h2>{recipe.title}</h2>
+              </Link>
             </div>
           ))
         ) : (
@@ -214,6 +164,7 @@ const Recipes = () => {
         <ToastContainer />
       </div>
     </div>
+
   );
 };
 

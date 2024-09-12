@@ -27,9 +27,10 @@ const LikedProducts = () => {
       }
 
       const data = await response.json();
+      console.log("Liked Products : ", data.likedRecipes);
 
       // Set the fetched data to the state
-      setLikedProducts(data);
+      setLikedProducts(data.likedRecipes);
     } catch (error) {
       toast.error("Error fetching liked products:", error);
     }
@@ -44,10 +45,18 @@ const LikedProducts = () => {
           "Are you sure you wanna remove this recipe from favourites??"
         )
       ) {
+        const dataToSend = {
+          user_id: localStorage.getItem("user_id"),
+          recipeId: recipeId,
+        };
         const response = await fetch(
-          `https://localhost:2000/auth/removeLiked/${recipeId}`,
+          `https://localhost:2000/auth/removeLiked`,
           {
             method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(dataToSend),
           }
         );
 
@@ -76,7 +85,7 @@ const LikedProducts = () => {
       <h2>Favourites</h2>
       <ul>
         {likedProducts.map((product) => (
-          <li key={product._id} className="list">
+          <li key={product.recipeId} className="list">
             <div>
               <h3>{product.title}</h3>
               <p>{product.description}</p>
@@ -103,7 +112,7 @@ const LikedProducts = () => {
 
               <button
                 className="remove-item-button"
-                onClick={() => handleRemoveItem(product._id)}
+                onClick={() => handleRemoveItem(product.recipeId)}
               >
                 Remove Item
               </button>

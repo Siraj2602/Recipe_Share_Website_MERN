@@ -11,6 +11,7 @@ import AddRecipe from "./components/AddRecipe";
 import LikedProducts from "./components/likedProducts";
 import ForgotPassword from "./components/ForgotPassword";
 import EditRecipe from "./components/EditRecipe";
+import RecipeDetails from "./components/RecipeDetails";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/" element={<Recipes />} />
           <Route path="/addRecipe" element={<AddRecipe />} />
           <Route path="/editRecipe/:id" element={<EditRecipe />} />
+          <Route path="/recipeDetails/:recipeId" element={<RecipeDetails />} />
         </Route>
       </Routes>
     </Router>
