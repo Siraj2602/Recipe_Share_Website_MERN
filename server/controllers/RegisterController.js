@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const Register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    console.log(name, email, password);
     const userId = uuidv4();
     const user = await User.findOne({ userId });
 

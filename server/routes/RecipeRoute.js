@@ -12,6 +12,7 @@ const {
   getAllLikedRecipes,
   removeFromLikedRecipes,
   searchRecipes,
+  checkFavorite,
 } = require("../controllers/RecipeController");
 
 router.post("/recipe", createRecipe);
@@ -21,7 +22,8 @@ router.get("/recipe/:id", getRecipe);
 router.get("/likedRecipes/:id", getAllLikedRecipes);
 router.delete("/recipe/:id", deleteRecipe);
 router.post("/likedRecipes", LikedList);
-router.delete("/removeLiked/:id", removeFromLikedRecipes);
+router.delete("/removeLiked", removeFromLikedRecipes);
+router.post("/checkFavorite", checkFavorite);
 router.get("/searchRecipes/:key", searchRecipes);
 
 module.exports = router;
